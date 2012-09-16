@@ -33,14 +33,15 @@ class GameScreen(object):
         ''' This sets up our game's screen. The rogue is started at block 0,0, we set
             some defaults, like our fonts, and we draw our background and our rogue.
         '''
-        # Set up the screen
+        # Set up the screen and the fonts we're going to use
         self.screen = pygame.display.set_mode((1280, 832))
         self.font = pygame.font.SysFont(None, 48)
         self.small_font = pygame.font.SysFont(None, 20)
         self.bg = pygame.image.load(IMG_DIR + 'rainbowbg.png')
         self.screen.blit(self.bg, (0,0))
 
-        # Set up our rogue
+        # Set up our rogue. We need to place him, load the image we're going to use for him,
+        # and draw him.
         self.selected_tile = [0, 0]
         self.player_blit = pygame.image.load(IMG_DIR + 'dude.png')
         self.screen.blit(self.player_blit, self.selected_tile)
@@ -49,17 +50,19 @@ class GameScreen(object):
         pygame.display.flip()
 
     def draw_player(self, coord):
-        ''' Draws the player at a specific coordinate
+        ''' Draws the rogue at a specific coordinate on the screen. 0,0 would be at the top-left corner
+            of the screen. If the tile size is 48, then a coordinate of 48, 48 would draw the rogue one block
+            down from the top, and one block to the right.
         '''
         self.screen.blit(self.player_blit, coord)
 
     def draw_background(self):
-        ''' Draws my glorious background.
+        ''' Draws my glorious rainbow background. This always starts at 0,0.
         '''
         self.screen.blit(self.bg, (0,0))
 
     def draw_screen_layers(self, map):
-        ''' Draws the layers of the game screen. We need to draw these in the right order,
+        ''' Draws the layers of the game screen. We need to draw these in the right order
             so they don't block each other! The background is drawn first, then the player.
 
             Once we're done getting our blits in place, we 'flip' the screen, so Pygame knows
@@ -70,28 +73,26 @@ class GameScreen(object):
         pygame.display.flip()
         
 class Map(object):
+    ''' The Map keeps track of what we have on our game map. This includes things like where our 
+        treasure is, where monsters are, and where the player is.
+    '''
     def __init__(self):
         ''' Sets all squares to uncleared.
         '''
         self.player = [0,0]
 
-    def get_blank_map(self):
-        ''' Returns a map with all values set to 0
-        '''
-        map = []
-        for i in range(ROWS):
-                        row = []
-                        for j in range(COLUMNS):
-                                row.append(0)
-                        map.append(row)
-        return map
-
     def set_current_position(self, position):
         self.player = position
 
 class Game(object):
+    ''' Game is responsible for running most of the game's actions. It's responsible for moving,
+        telling GameScreen to draw the screen, and contains the main loop for the game. 
+
+        Think of Game as the thing that coordinates all the parts of the game.
+        '''
     def __init__(self):
-        ''' Sets up the game's initial screen and some starting variables.
+        ''' This does the initial set-up for the game. It defines the screen and map, then calls 
+            the main loop for the game.
         '''
         # Set up the screen
         self.screen = GameScreen()
@@ -102,33 +103,44 @@ class Game(object):
         # Run the game!
         self.run()
 
-    def refresh_screen(self):
-        self.screen.draw_screen_layers(self.map)
-
     def move(self, hor, vert):
-        ''' Moves the player, given a keypress. 
-            Also evaluates if the player needs to fight or pick up some treasure.
+        ''' This function takes a pair of horizontal and vertical values and moves the rogue a space
+            if possible. If the rogue is a the edge of the board, it can't move, so the program returns 
+            to the main loop.
         '''
+        # Get the current location of the rogue and save the row and column to two variables.
         self.old_row, self.old_col = self.map.player
+
+        # Add the amount we want to move the rogue to the current row and column.
         row = self.old_row + hor
         col = self.old_col + vert
+
+        # Are we running into the edge of the board? If so, go ahead and return to the main loop.
+        # We won't move the rogue.
         if row > (ROWS-1) * TILE_SIZE or row < 0 or col > (COLUMNS-1) * TILE_SIZE or col < 0:
             return
+
+        # Set the current position of the rogue to the new row and column values.
         self.map.set_current_position([row, col])
 
     def run(self):
-        ''' The main loop of the game.
+        ''' The main loop of the game. The block of code under 'while 1' will run until the user
+            hits the ESC key.
         '''
-        # Fix for double move from Joshua Grigonis! Thanks!
+        # We need to set the amount we're moving to zero, both for the horizontal and vertical. 
         hor = 0
         vert = 0
         while 1:
-            #self.clock.tick(30)
+            # Every time you hit a key in PyGame, PyGame captures that as an event. The event stores what
+            # keys you hit, where you moved your mouse, if you clicked, etc. Here, we're getting those events
+            # and only doing something if it's one of the keys we're 'listening' for. In this case, we're listening 
+            # for the ESC key and the arrow keys.
             for event in pygame.event.get():
-                if event.type == QUIT:
-                    sys.exit(0)
                 if event.type == KEYDOWN:
-                    if event.key == K_ESCAPE: 
+                    # Each keystroke is measured twice. Once for the key being pressed, and once for the key being released.
+                    # We're only worried about the data we get when the key is pressed down.
+                    if event.key == K_ESCAPE:
+                        # If we hit the escape key, quit the game.   
                         sys.exit(0)
                     if event.key == K_LEFT:
                         hor = -TILE_SIZE
@@ -148,7 +160,7 @@ class Game(object):
                         self.move(hor, vert) 
                         hor = 0
                         vert = 0
-            self.refresh_screen()
+            self.screen.draw_screen_layers(self.map)
 
 def main():
     while True:
