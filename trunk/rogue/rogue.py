@@ -143,29 +143,43 @@ class Game(object):
                         # If we hit the escape key, quit the game.   
                         sys.exit(0)
                     if event.key == K_LEFT:
+                        # If we hit the left arrow, we want to move a negative horizontal value
                         hor = -TILE_SIZE
                         vert = 0
                     if event.key == K_RIGHT:
+                        # If we hit the right arrow, we want to move a positive horizontal value
                         hor = TILE_SIZE
                         vert = 0
                     if event.key == K_UP:
+                        # If we hit the up arrow, we want to move a negative vertical value
                         vert = -TILE_SIZE
                         hor = 0
                     if event.key == K_DOWN:
+                        # If we hit the down arrow, we want to move a positive vertical value
                         vert = TILE_SIZE
                         hor = 0
                 if event.type == KEYUP:
-                    # updates only occur is player has moved.
+                    # We get a KEYUP event when the player has released the key.
                     if vert or hor:
+                        # If vert or hor are not zero, then the player wants to move! Go ahead and
+                        # move, then reset hor and vert to zero.
                         self.move(hor, vert) 
                         hor = 0
                         vert = 0
+            # Draw all the layers once the player has hit a key
             self.screen.draw_screen_layers(self.map)
 
 def main():
+    ''' This is the main loop of the program. It's responsible for initializing PyGame and creating a
+        new game.
+    '''
     while True:
         pygame.init()
         game = Game()
 
 if __name__ == "__main__":
+    # Python doesn't run any of the classes or functions when it loads a new program. That would be a 
+    # mess! Instead, it looks for a bit of code that isn't a class or function and runs that. 
+    #
+    # This bit of code tells Python to go ahead and run the 'main' function.
     main()
